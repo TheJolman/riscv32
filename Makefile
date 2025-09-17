@@ -64,7 +64,27 @@ run-test-%: $(target) $(builddir)%.hex
 	@echo "Running test: $*"
 	$(sim) $(target) +testfile=$(builddir)$*.hex
 
+list-tests:
+	@echo "Available test programs:"
+	@ls $(testdir)*.s 2>/dev/null | sed 's|$(testdir)||' | sed 's|\.s$$||' || echo "No test programs found in $(testdir)"
+
 clean:
 	rm -rf $(builddir)
+
+help:
+	@echo "Available targets:"
+	@echo "  all          - Build CPU and assemble all test programs"
+	@echo "  run          - Run CPU simulator"
+	@echo "  run-test-X   - Run CPU with specific test program X"
+	@echo "  show-X       - Show disassembly of test program X"
+	@echo "  test-programs- Assemble all test programs"
+	@echo "  list-tests   - List available test programs"
+	@echo "  clean        - Remove build directory"
+	@echo "  help         - Show this help"
+	@echo ""
+	@echo "Directory structure:"
+	@echo "  tests/       - Put your .s assembly files here"
+	@echo "  build/       - Generated files (hex, bin, dumps)"
+	@echo "  *.v          - Your Verilog CPU source files"
 
 .PHONY: all clean run test-programs
