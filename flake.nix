@@ -13,6 +13,7 @@
     flake-utils,
     ...
   }:
+
     flake-utils.lib.eachDefaultSystem (
       system: let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -25,7 +26,8 @@
             verilator # compiler/simulator
             iverilog # another compiler/simulator
             verible # language server
-            gtkwave
+            gtkwave # we might need this?
+            gnumake
           ];
         };
       }
