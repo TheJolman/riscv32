@@ -4,7 +4,7 @@ sim := vvp
 pname = program
 
 # RISC-V toolchain
-riscv_prefix := $(riscv-none-elf-)
+riscv_prefix := riscv64-none-elf-
 riscv_as := $(riscv_prefix)as
 riscv_objcopy := $(riscv_prefix)objcopy
 riscv_objdump := $(riscv_prefix)objdump
@@ -52,7 +52,7 @@ test-programs: $(test_bins) $(test_hexs) $(test_dumps)
 
 # Generate disassembly for debugging
 $(builddir)%.dump: $(builddir)%.o
-	$(riscv_objdump) -d $<  $@
+	$(riscv_objdump) -d $< > $@
 
 # Show disassembly of test program
 show-%: $(builddir)%.dump
