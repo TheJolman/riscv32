@@ -1,8 +1,10 @@
 with import <nixpkgs> {};
 pkgsCross.riscv64-embedded.mkShell {
   packages = with pkgs; [
-    gnumake
     iverilog
+    verilator
+    gtkwave
+    gnumake
     bat
   ];
 }
