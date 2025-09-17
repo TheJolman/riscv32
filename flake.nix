@@ -1,23 +1,33 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    systems.url = "github:nix-systems/default";
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.systems.follows = "systems";
+    };
   };
 
-  outputs = {nixpkgs, ...}: let
-    systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
-    forAllSystems = nixpkgs.lib.genAttrs systems;
-  in {
-    devShells = forAllSystems (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-    in {
-      default = pkgs.mkShell {
-        packages = with pkgs; [
-          verilator # simulator
-          iverilog # another simulator
-          verible # lsp server
-          gtkwave
-        ];
-      };
-    });
-  };
+  outputs = {
+    nixpkgs,
+    flake-utils,
+    ...
+  }:
+    flake-utils.lib.eachDefaultSystem (
+      system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        packages.default =
+          pkgs.stdenv.mkDerivation {};
+
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            verilator # compiler/simulator
+            iverilog # another compiler/simulator
+            verible # language server
+            gtkwave
+          ];
+        };
+      }
+    );
 }
