@@ -1,37 +1,30 @@
 {
+  description = "RISC-V CPU development environment";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    systems.url = "github:nix-systems/default";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
-    };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
+    self,
     nixpkgs,
     flake-utils,
-    ...
   }:
-    flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-        crossPkgs = import nixpkgs {
-          localSystem.system = "${system}";
-          crossSystem.system = "riscv64-none-elf";
-        };
-      in {
-        packages.default =
-          pkgs.stdenv.mkDerivation crossPkgs.mkDerivation {
-          };
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+      riscv-pkgs = pkgs.pkgsCross.riscv64-embedded;
+    in {
+      devShells.default = riscv-pkgs.mkShell {
+        buildInputs = with pkgs; [
+          # Verilog simulation tools
+          iverilog
+          gtkwave
 
-        devShells.default = crossPkgs.riscv64-embedded.mkShell {
-          packages = with pkgs; [
-            iverilog # compiler/sim
-            verible # language server
-            gnumake
-          ];
-        };
-      }
-    );
+          # Development tools
+          gnumake
+          hexdump
+        ];
+      };
+    });
 }
