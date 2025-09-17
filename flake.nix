@@ -13,20 +13,22 @@
     flake-utils,
     ...
   }:
-
     flake-utils.lib.eachDefaultSystem (
       system: let
         pkgs = nixpkgs.legacyPackages.${system};
+        crossPkgs = import nixpkgs {
+          localSystem.system = "${system}";
+          crossSystem.system = "riscv64-none-elf";
+        };
       in {
         packages.default =
-          pkgs.stdenv.mkDerivation {};
+          pkgs.stdenv.mkDerivation crossPkgs.mkDerivation {
+          };
 
-        devShells.default = pkgs.mkShell {
+        devShells.default = crossPkgs.riscv64-embedded.mkShell {
           packages = with pkgs; [
-            verilator # compiler/simulator
-            iverilog # another compiler/simulator
+            iverilog # compiler/sim
             verible # language server
-            gtkwave # we might need this?
             gnumake
           ];
         };
