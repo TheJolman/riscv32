@@ -12,7 +12,7 @@ riscv_arch := rv32i
 riscv_abi := ilp32
 
 # Directories
-srcs := $(wildcard *.v)
+srcs := cpu.v
 builddir := build/
 testdir := tests/
 

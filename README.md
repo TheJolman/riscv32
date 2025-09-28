@@ -38,3 +38,8 @@ Verilog?
 
 ### AI Usage Log
 - Used an LLM to assist in setting up the project and Makefile
+
+# Notes
+
+- Makefile should compile both CPU and sim to separate binaries
+- Sim runs CPU
