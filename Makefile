@@ -1,11 +1,10 @@
 # Verilog tools
 compiler := iverilog
 sim := vvp
-cpu_name = cpu
 testbench_name = testbench
 
 # RISC-V toolchain
-riscv_prefix := riscv64-none-elf-
+riscv_prefix := riscv32-none-elf-
 riscv_as := $(riscv_prefix)as
 riscv_objcopy := $(riscv_prefix)objcopy
 riscv_objdump := $(riscv_prefix)objdump
@@ -14,31 +13,31 @@ riscv_abi := ilp32
 
 # Directories
 cpu_srcs := cpu.v
+testbench_srcs := testbench.v
 builddir := build/
 testdir := tests/
 
 # Target names
-cpu = $(builddir)$(cpu_name)
 testbench = $(builddir)$(testbench_name)
 test_programs := $(wildcard $(testdir)*.s)
 test_bins := $(test_programs:$(testdir)%.s=$(builddir)%.bin)
 test_hexs := $(test_programs:$(testdir)%.s=$(builddir)%.hex)
 test_dumps := $(test_programs:$(testdir)%.s=$(builddir)%.dump)
 
-all: $(cpu) $(testbench)
+all: $(testbench)
 
-# Build CPU sim
-$(cpu): $(cpu_srcs)
+# Build simulator
+# The testbench usually instantiates the CPU, so we compile them together.
+$(testbench): $(testbench_srcs) $(cpu_srcs)
 	@mkdir -p $(builddir)
 	$(compiler) -o $@ $^
 
-$(testbench): testbench.v
-	@mkdir -p $(builddir)
-	$(compiler) -o $@ $^
-
-# Run Testbench
+# Run Testbench with a default test program (if any is defined in testbench.v)
 run: $(testbench)
 	$(sim) $<
+
+# Assemble all test programs
+test-programs: $(test_hexs) $(test_dumps)
 
 # Assemble RISC-V assembly to object file
 $(builddir)%.o: $(testdir)%.s
@@ -50,11 +49,9 @@ $(builddir)%.bin: $(builddir)%.o
 	$(riscv_objcopy) -O binary $< $@
 
 # Convert binary to hex (for Verilog $readmemh)
+# NOTE: Errors in hexdump will cause the build to fail.
 $(builddir)%.hex: $(builddir)%.bin
-	hexdump -v -e '1/4 "%08x\n"' $< > $@ || echo "" > $@
-
-# Run all test programs
-test-programs: $(test_bins) $(test_hexs) $(test_dumps)
+	hexdump -v -e '1/4 "%08x\n"' $< > $@
 
 # Generate disassembly for debugging
 $(builddir)%.dump: $(builddir)%.o
@@ -63,12 +60,12 @@ $(builddir)%.dump: $(builddir)%.o
 # Show disassembly of test program
 show-%: $(builddir)%.dump
 	@echo "=== Disassembly of $* ==="
-	@bat $<
+	@command -v bat &> /dev/null && bat $< || cat $<
 
 # Run with a specific test program
-run-test-%: $(target) $(builddir)%.hex
+run-test-%: $(testbench) $(builddir)%.hex
 	@echo "Running test: $*"
-	$(sim) $(target) +testfile=$(builddir)$*.hex
+	$(sim) $(testbench) +testfile=$(builddir)$*.hex
 
 list-tests:
 	@echo "Available test programs:"
@@ -79,9 +76,9 @@ clean:
 
 help:
 	@echo "Available targets:"
-	@echo "  all          - Build CPU and testbench"
-	@echo "  run          - Run testbench"
-	@echo "  run-test-X   - Run CPU with specific test program X"
+	@echo "  all          - Build the simulator"
+	@echo "  run          - Run simulator with default test (if any)"
+	@echo "  run-test-X   - Run simulator with specific test program X"
 	@echo "  show-X       - Show disassembly of test program X"
 	@echo "  test-programs- Assemble all test programs"
 	@echo "  list-tests   - List available test programs"
@@ -93,4 +90,4 @@ help:
 	@echo "  build/       - Generated files (hex, bin, dumps)"
 	@echo "  *.v          - Your Verilog CPU source files"
 
-.PHONY: all clean run test-programs
+.PHONY: all clean run test-programs list-tests help run-test-% show-%
