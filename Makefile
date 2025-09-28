@@ -1,7 +1,8 @@
 # Verilog tools
 compiler := iverilog
 sim := vvp
-pname = program
+cpu_name = cpu
+testbench_name = testbench
 
 # RISC-V toolchain
 riscv_prefix := riscv64-none-elf-
@@ -12,26 +13,31 @@ riscv_arch := rv32i
 riscv_abi := ilp32
 
 # Directories
-srcs := cpu.v
+cpu_srcs := cpu.v
 builddir := build/
 testdir := tests/
 
 # Target names
-target = $(builddir)$(pname)
+cpu = $(builddir)$(cpu_name)
+testbench = $(builddir)$(testbench_name)
 test_programs := $(wildcard $(testdir)*.s)
 test_bins := $(test_programs:$(testdir)%.s=$(builddir)%.bin)
 test_hexs := $(test_programs:$(testdir)%.s=$(builddir)%.hex)
 test_dumps := $(test_programs:$(testdir)%.s=$(builddir)%.dump)
 
-all: $(target)
+all: $(cpu) $(testbench)
 
-# Build CPI sim
-$(target): $(srcs)
+# Build CPU sim
+$(cpu): $(cpu_srcs)
 	@mkdir -p $(builddir)
 	$(compiler) -o $@ $^
 
-# Run CPU sim
-run: $(target)
+$(testbench): testbench.v
+	@mkdir -p $(builddir)
+	$(compiler) -o $@ $^
+
+# Run Testbench
+run: $(testbench)
 	$(sim) $<
 
 # Assemble RISC-V assembly to object file
@@ -73,8 +79,8 @@ clean:
 
 help:
 	@echo "Available targets:"
-	@echo "  all          - Build CPU and assemble all test programs"
-	@echo "  run          - Run CPU simulator"
+	@echo "  all          - Build CPU and testbench"
+	@echo "  run          - Run testbench"
 	@echo "  run-test-X   - Run CPU with specific test program X"
 	@echo "  show-X       - Show disassembly of test program X"
 	@echo "  test-programs- Assemble all test programs"
