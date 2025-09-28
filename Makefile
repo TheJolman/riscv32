@@ -12,8 +12,7 @@ riscv_arch := rv32i
 riscv_abi := ilp32
 
 # Directories
-cpu_srcs := cpu.v
-testbench_srcs := testbench.v
+srcs := cpu.v testbench.v
 builddir := build/
 testdir := tests/
 
@@ -28,7 +27,7 @@ all: $(testbench)
 
 # Build simulator
 # The testbench usually instantiates the CPU, so we compile them together.
-$(testbench): $(testbench_srcs) $(cpu_srcs)
+$(testbench): $(srcs)
 	@mkdir -p $(builddir)
 	$(compiler) -o $@ $^
 
